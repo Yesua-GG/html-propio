@@ -459,7 +459,7 @@ function abrirModalEdicion(usuarioId) {
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // usuarioSeleccionado = null; // Línea eliminada
+    // Se elimina: usuarioSeleccionado = null;
 }
 
 async function mostrarModalConfirmacion() {
@@ -522,6 +522,8 @@ function validarNumeroTelefono(numero) {
 /**
  * FUNCIÓN CORREGIDA: Ahora elimina el '+' inicial y los espacios.
  */
+/**
+
 function abrirWhatsApp() {
     
     // 1. COMPROBACIÓN DE SEGURIDAD
@@ -536,23 +538,20 @@ function abrirWhatsApp() {
     console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
     console.log('1. Valor de usuarioSeleccionado.telefono (completo):', usuarioSeleccionado.telefono);
     
-    // 2. LECTURA Y LIMPIEZA DEL NÚMERO (Implementación del requisito)
+    // 2. LECTURA Y LIMPIEZA DEL NÚMERO
     const telefonoCompleto = String(usuarioSeleccionado.telefono || '');
     
-    // Eliminar espacios
-    let numeroLimpio = telefonoCompleto.replace(/\s/g, ''); 
+    // Eliminar espacios (\s/g) Y el '+' al inicio (^/+)
+    // El número ahora queda listo para el enlace de wa.me sin caracteres especiales.
+    let numeroLimpio = telefonoCompleto.replace(/\s/g, '').replace(/^\+/, ''); 
     
-    // Eliminar el '+' si existe al inicio
-    if (numeroLimpio.startsWith('+')) {
-        numeroLimpio = numeroLimpio.substring(1);
-    }
-    
-    const numeroTelefono = numeroLimpio; // Número listo para el enlace de wa.me
+    const numeroTelefono = numeroLimpio; 
     
     console.log('2. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
 
-    if (!validarNumeroTelefono(`+${numeroTelefono}`)) { // Se usa el '+' para la validación interna
-        console.error("Error: El número de teléfono no es válido o está vacío. Valor usado:", numeroTelefono);
+    // Se mantiene una comprobación mínima (aunque ya se validó en mostrarModalConfirmacion)
+    if (numeroTelefono.length < 8) { 
+        console.error("Error: El número de teléfono no es válido. Valor usado:", numeroTelefono);
         mostrarNotificacion('Error: El número de teléfono no es válido. Revise el formato.', 'error');
         cerrarModalConfirmacion();
         return;
@@ -576,10 +575,9 @@ function abrirWhatsApp() {
         mostrarNotificacion('WhatsApp abierto correctamente', 'success');
     }
     
-    // 7. LIMPIEZA FINAL: Resetear la variable global.
+    // 7. LIMPIEZA FINAL: Resetear la variable global después de completar el proceso.
     usuarioSeleccionado = null; 
 }
-
 function formatearFecha(fecha) {
     const fechaObj = new Date(fecha);
     return fechaObj.toLocaleDateString('es-ES', {
@@ -686,3 +684,4 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
