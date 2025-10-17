@@ -3,7 +3,7 @@ let usuarios = [];
 
 // Variables globales
 let usuariosFiltrados = [...usuarios];
-let usuarioSeleccionado = null;
+let usuarioSeleccionado = null; // Se inicializa como null
 let filtroActual = 'all'; // 'all', 'contacted', 'pending'
 
 // Elementos del DOM
@@ -269,12 +269,10 @@ function configurarEventListeners() {
     // Modal de edición
     closeModal.addEventListener('click', cerrarModalEdicion);
     cancelBtn.addEventListener('click', cerrarModalEdicion);
-    // **NOTA:** confirmBtn ahora llama a la función modificada
     confirmBtn.addEventListener('click', mostrarModalConfirmacion); 
     
     // Modal de confirmación
     cancelConfirmBtn.addEventListener('click', cerrarModalConfirmacion);
-    // **NOTA:** finalConfirmBtn ahora llama a la función modificada
     finalConfirmBtn.addEventListener('click', abrirWhatsApp);
     
     // Cerrar modales al hacer clic fuera
@@ -461,18 +459,21 @@ function abrirModalEdicion(usuarioId) {
     }, 100);
 }
 
+// 📌 MODIFICACIÓN: Ya NO anula usuarioSeleccionado aquí.
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    usuarioSeleccionado = null;
+}
+
+// 📌 MODIFICACIÓN: Ya NO anula usuarioSeleccionado aquí.
+function cerrarModalConfirmacion() {
+    confirmModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
 }
 
 /**
- * **MODIFICACIÓN CLAVE (1/2)**
- * Esta función ahora SOLO valida el teléfono, actualiza el objeto local
+ * Esta función SOLO valida el teléfono, actualiza el objeto local
  * y abre el modal de confirmación.
- * La actualización a Firebase se movió a abrirWhatsApp() para ligar
- * window.open() directamente al clic del usuario.
  */
 function mostrarModalConfirmacion() {
     const numeroTelefono = phoneInput.value.trim();
@@ -496,11 +497,6 @@ function mostrarModalConfirmacion() {
     document.body.style.overflow = 'hidden';
 }
 
-function cerrarModalConfirmacion() {
-    confirmModal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
 function validarNumeroTelefono(numero) {
     // Expresión regular para validar números de teléfono internacionales
     const regex = /^\+[1-9]\d{1,14}$/;
@@ -508,17 +504,23 @@ function validarNumeroTelefono(numero) {
 }
 
 /**
- * **MODIFICACIÓN CLAVE (2/2)**
- * Esta función ahora:
- * 1. Ejecuta la actualización a Firebase (async/await).
- * 2. Llama a window.open().
- * Esto asegura que window.open() esté ligado al clic de finalConfirmBtn.
+ * 📌 MODIFICACIÓN CLAVE: Se agregó la comprobación de null al inicio 
+ * y se movió la anulación de usuarioSeleccionado al final.
  */
 async function abrirWhatsApp() {
+    
+    // 1. COMPROBACIÓN DE SEGURIDAD (CORRIGE EL ERROR DE "reading 'telefono'")
+    if (!usuarioSeleccionado || !usuarioSeleccionado.telefono) {
+        console.error("Error: No se ha seleccionado un usuario o falta el teléfono.");
+        mostrarNotificacion('Error: No se pudo obtener la información del usuario. Intente nuevamente.', 'error');
+        cerrarModalConfirmacion();
+        return; 
+    }
+
     const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
-    // 1. Intentar actualizar en Firebase ANTES de abrir WhatsApp
+    // 2. Intentar actualizar en Firebase ANTES de abrir WhatsApp
     if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
         try {
             await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, usuarioSeleccionado.telefono);
@@ -527,24 +529,24 @@ async function abrirWhatsApp() {
         }
     }
     
-    // 2. Crear URL de WhatsApp
+    // 3. Crear URL de WhatsApp
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     
-    // 3. Abrir WhatsApp en una nueva ventana (Esta acción está ligada al clic)
+    // 4. Abrir WhatsApp en una nueva ventana (Esta acción está ligada al clic)
     const newWindow = window.open(urlWhatsApp, '_blank');
     
-    // Manejar el bloqueador de Pop-ups (el navegador puede devolver null o la ventana cerrada)
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        mostrarNotificacion('El navegador bloqueó la ventana de WhatsApp. Por favor, permite los pop-ups para este sitio.', 'error');
-    }
-    
-    // 4. Cerrar el modal
+    // 5. Cerrar el modal
     cerrarModalConfirmacion();
     
-    // 5. Mostrar mensaje de éxito (si la ventana se abrió)
-    if (newWindow) {
+    // 6. Manejar el bloqueador y mostrar notificación
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        mostrarNotificacion('El navegador bloqueó la ventana de WhatsApp. Por favor, permite los pop-ups para este sitio.', 'error');
+    } else {
         mostrarNotificacion('WhatsApp abierto correctamente', 'success');
     }
+
+    // 7. LIMPIEZA FINAL: Resetear la variable global después de completar el proceso
+    usuarioSeleccionado = null; 
 }
 
 function formatearFecha(fecha) {
@@ -560,10 +562,6 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     // Crear elemento de notificación
     const notificacion = document.createElement('div');
     notificacion.className = `notificacion notificacion-${tipo}`;
-    notificacion.innerHTML = `
-        <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'info-circle'}"></i>
-        <span>${mensaje}</span>
-    `;
     
     // Estilos para la notificación
     let backgroundColor = '#17a2b8';
