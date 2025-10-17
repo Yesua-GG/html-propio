@@ -137,7 +137,8 @@ function obtenerUsuariosEjemplo() {
             telefono: "+34 612 345 678",
             pais: "España",
             fechaRegistro: "2024-01-15",
-            estado: "Activo"
+            estado: "Activo",
+            contacted: false
         },
         {
             id: 'ejemplo-2',
@@ -146,7 +147,9 @@ function obtenerUsuariosEjemplo() {
             telefono: "+34 678 901 234",
             pais: "España",
             fechaRegistro: "2024-02-20",
-            estado: "Activo"
+            estado: "Activo",
+            contacted: true,
+            contactedAt: "2024-10-15T10:00:00.000Z"
         },
         {
             id: 'ejemplo-3',
@@ -155,7 +158,8 @@ function obtenerUsuariosEjemplo() {
             telefono: "+1 555 123 4567",
             pais: "Estados Unidos",
             fechaRegistro: "2024-03-10",
-            estado: "Activo"
+            estado: "Activo",
+            contacted: false
         }
     ];
 }
@@ -265,10 +269,12 @@ function configurarEventListeners() {
     // Modal de edición
     closeModal.addEventListener('click', cerrarModalEdicion);
     cancelBtn.addEventListener('click', cerrarModalEdicion);
-    confirmBtn.addEventListener('click', mostrarModalConfirmacion);
+    // **NOTA:** confirmBtn ahora llama a la función modificada
+    confirmBtn.addEventListener('click', mostrarModalConfirmacion); 
     
     // Modal de confirmación
     cancelConfirmBtn.addEventListener('click', cerrarModalConfirmacion);
+    // **NOTA:** finalConfirmBtn ahora llama a la función modificada
     finalConfirmBtn.addEventListener('click', abrirWhatsApp);
     
     // Cerrar modales al hacer clic fuera
@@ -461,35 +467,24 @@ function cerrarModalEdicion() {
     usuarioSeleccionado = null;
 }
 
-async function mostrarModalConfirmacion() {
+/**
+ * **MODIFICACIÓN CLAVE (1/2)**
+ * Esta función ahora SOLO valida el teléfono, actualiza el objeto local
+ * y abre el modal de confirmación.
+ * La actualización a Firebase se movió a abrirWhatsApp() para ligar
+ * window.open() directamente al clic del usuario.
+ */
+function mostrarModalConfirmacion() {
     const numeroTelefono = phoneInput.value.trim();
     
-    if (!numeroTelefono) {
-        alert('Por favor, ingresa un número de teléfono válido');
+    if (!numeroTelefono || !validarNumeroTelefono(numeroTelefono)) {
+        alert('Por favor, ingresa un número de teléfono válido con código de país (ej: +34123456789)');
         phoneInput.focus();
         return;
     }
     
-    if (!validarNumeroTelefono(numeroTelefono)) {
-        alert('Por favor, ingresa un número de teléfono válido con código de país');
-        phoneInput.focus();
-        return;
-    }
-    
-    // Actualizar el número en el usuario seleccionado
+    // Actualizar el número en el usuario seleccionado (solo localmente por ahora)
     usuarioSeleccionado.telefono = numeroTelefono;
-    
-    // Intentar actualizar en Firebase si es posible
-    if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
-        try {
-            const actualizado = await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, numeroTelefono);
-            if (actualizado) {
-                console.log('Teléfono actualizado en Firebase');
-            }
-        } catch (error) {
-            console.log('No se pudo actualizar en Firebase, pero continuando...');
-        }
-    }
     
     // Llenar el modal de confirmación
     confirmUserName.textContent = usuarioSeleccionado.nombre;
@@ -512,21 +507,44 @@ function validarNumeroTelefono(numero) {
     return regex.test(numero.replace(/\s/g, ''));
 }
 
-function abrirWhatsApp() {
+/**
+ * **MODIFICACIÓN CLAVE (2/2)**
+ * Esta función ahora:
+ * 1. Ejecuta la actualización a Firebase (async/await).
+ * 2. Llama a window.open().
+ * Esto asegura que window.open() esté ligado al clic de finalConfirmBtn.
+ */
+async function abrirWhatsApp() {
     const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
-    // Crear URL de WhatsApp
+    // 1. Intentar actualizar en Firebase ANTES de abrir WhatsApp
+    if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
+        try {
+            await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, usuarioSeleccionado.telefono);
+        } catch (error) {
+            console.warn('Advertencia: No se pudo actualizar el teléfono en Firebase, pero se continúa con WhatsApp.');
+        }
+    }
+    
+    // 2. Crear URL de WhatsApp
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     
-    // Abrir WhatsApp en una nueva ventana
-    window.open(urlWhatsApp, '_blank');
+    // 3. Abrir WhatsApp en una nueva ventana (Esta acción está ligada al clic)
+    const newWindow = window.open(urlWhatsApp, '_blank');
     
-    // Cerrar el modal
+    // Manejar el bloqueador de Pop-ups (el navegador puede devolver null o la ventana cerrada)
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        mostrarNotificacion('El navegador bloqueó la ventana de WhatsApp. Por favor, permite los pop-ups para este sitio.', 'error');
+    }
+    
+    // 4. Cerrar el modal
     cerrarModalConfirmacion();
     
-    // Mostrar mensaje de éxito
-    mostrarNotificacion('WhatsApp abierto correctamente', 'success');
+    // 5. Mostrar mensaje de éxito (si la ventana se abrió)
+    if (newWindow) {
+        mostrarNotificacion('WhatsApp abierto correctamente', 'success');
+    }
 }
 
 function formatearFecha(fecha) {
@@ -610,8 +628,8 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
 
 // Función para agregar nuevos usuarios (útil para testing)
 function agregarUsuario(nuevoUsuario) {
-    const id = Math.max(...usuarios.map(u => u.id)) + 1;
-    usuarios.push({ id, ...nuevoUsuario });
+    const id = `ejemplo-${Math.max(...usuarios.map(u => u.id.startsWith('ejemplo-') ? parseInt(u.id.split('-')[1]) : 0)) + 1}`;
+    usuarios.push({ id, ...nuevoUsuario, estado: 'Activo', contacted: false });
     usuariosFiltrados = [...usuarios];
     mostrarUsuarios(usuariosFiltrados);
     actualizarEstadisticas();
