@@ -176,6 +176,34 @@ async function actualizarTelefonoEnFirebase(usuarioId, nuevoTelefono) {
         return false;
     }
 }
+/**
+ * FUNCIÓN NUEVA: Obtiene el número de teléfono (campo 'phoneNumber') 
+ * directamente desde el documento del usuario en la colección 'users' de Firebase.
+ */
+async function obtenerTelefonoDesdeFirebase(usuarioId) {
+    // Si el ID es de ejemplo, usamos el valor local (no hay Firebase)
+    if (usuarioId.startsWith('ejemplo-')) {
+        return null; 
+    }
+    try {
+        // Asume que window.firebaseDoc y window.firebaseGetDoc están definidos
+        const usuarioRef = window.firebaseDoc(window.firebaseDb, 'users', usuarioId);
+        const docSnap = await window.firebaseGetDoc(usuarioRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // El campo real en Firestore es 'phoneNumber'
+            return data.phoneNumber; 
+        } else {
+            console.warn(`[FB Fetch] No se encontró el documento para el ID: ${usuarioId}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('[FB Fetch] Error al obtener el teléfono desde Firebase:', error);
+        return null;
+    }
+}
+
+
 
 function mostrarCarga() {
     usersGrid.style.display = 'none';
@@ -520,11 +548,10 @@ function validarNumeroTelefono(numero) {
 }
 
 /**
- * FUNCIÓN CORREGIDA: Ahora elimina el '+' inicial y los espacios.
+ * FUNCIÓN REEMPLAZADA: Ahora obtiene el número directamente de Firebase 
+ * para garantizar que sea el valor actualizado. Quita el '+' y los espacios.
  */
-/**
-
-function abrirWhatsApp() {
+async function abrirWhatsApp() {
     
     // 1. COMPROBACIÓN DE SEGURIDAD
     if (!usuarioSeleccionado) { 
@@ -534,48 +561,55 @@ function abrirWhatsApp() {
         return; 
     }
 
+    // 2. OBTENER EL NÚMERO MÁS RECIENTE DIRECTAMENTE DESDE FIREBASE
+    const telefonoFirebase = await obtenerTelefonoDesdeFirebase(usuarioSeleccionado.id);
+
+    // Usar el valor de Firebase, o el valor local (que ya fue actualizado por el input) como fallback
+    const telefonoAUsar = telefonoFirebase || usuarioSeleccionado.telefono;
+    
     // --- DIAGNÓSTICO ---
     console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
-    console.log('1. Valor de usuarioSeleccionado.telefono (completo):', usuarioSeleccionado.telefono);
+    console.log('1. ID de Usuario:', usuarioSeleccionado.id);
+    console.log('2. Teléfono obtenido de Firebase:', telefonoFirebase);
+    console.log('3. Teléfono local (Fallback):', usuarioSeleccionado.telefono);
     
-    // 2. LECTURA Y LIMPIEZA DEL NÚMERO
-    const telefonoCompleto = String(usuarioSeleccionado.telefono || '');
+    // 3. LIMPIEZA DEL NÚMERO: Eliminar espacios y el '+' inicial.
+    const telefonoCompleto = String(telefonoAUsar || '');
     
     // Eliminar espacios (\s/g) Y el '+' al inicio (^/+)
-    // El número ahora queda listo para el enlace de wa.me sin caracteres especiales.
     let numeroLimpio = telefonoCompleto.replace(/\s/g, '').replace(/^\+/, ''); 
     
     const numeroTelefono = numeroLimpio; 
     
-    console.log('2. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
+    console.log('4. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
 
-    // Se mantiene una comprobación mínima (aunque ya se validó en mostrarModalConfirmacion)
-    if (numeroTelefono.length < 8) { 
-        console.error("Error: El número de teléfono no es válido. Valor usado:", numeroTelefono);
-        mostrarNotificacion('Error: El número de teléfono no es válido. Revise el formato.', 'error');
+    // Comprobación final de que tenemos un número utilizable
+    if (!numeroTelefono || numeroTelefono.length < 8) { 
+        console.error("Error: El número de teléfono final no es válido. Valor usado:", numeroTelefono);
+        mostrarNotificacion('Error: El número de teléfono no es válido. Revise el formato o que el campo exista en Firebase.', 'error');
         cerrarModalConfirmacion();
         return;
     }
 
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
-    // 3. Crear URL de WhatsApp (usando el número sin '+')
+    // 4. Crear URL de WhatsApp (usando el número sin '+')
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     
-    // 4. Abrir WhatsApp en una nueva ventana
+    // 5. Abrir WhatsApp en una nueva ventana
     const newWindow = window.open(urlWhatsApp, '_blank');
     
-    // 5. Cerrar el modal
+    // 6. Cerrar el modal
     cerrarModalConfirmacion();
 
-    // 6. Manejar el bloqueador y mostrar notificación
+    // 7. Manejar el bloqueador y mostrar notificación
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
         mostrarNotificacion('El navegador bloqueó la ventana de WhatsApp. Por favor, permite los pop-ups para este sitio.', 'error');
     } else {
         mostrarNotificacion('WhatsApp abierto correctamente', 'success');
     }
     
-    // 7. LIMPIEZA FINAL: Resetear la variable global después de completar el proceso.
+    // 8. LIMPIEZA FINAL: Resetear la variable global.
     usuarioSeleccionado = null; 
 }
 function formatearFecha(fecha) {
@@ -684,4 +718,5 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
