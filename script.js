@@ -169,10 +169,6 @@ async function actualizarTelefonoEnFirebase(usuarioId, nuevoTelefono) {
             lastUpdated: new Date().toISOString()
         });
         console.log(`Teléfono actualizado en users para usuario ${usuarioId}`);
-        console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
-    console.log('1. ID de Usuario:', usuarioSeleccionado.id);
-    console.log('2. Teléfono obtenido de Firebase:', telefonoFirebase);
-    console.log('3. Teléfono local (Fallback):', usuarioSeleccionado.telefono);
         return true;
         
     } catch (error) {
@@ -180,34 +176,6 @@ async function actualizarTelefonoEnFirebase(usuarioId, nuevoTelefono) {
         return false;
     }
 }
-/**
- * FUNCIÓN NUEVA: Obtiene el número de teléfono (campo 'phoneNumber') 
- * directamente desde el documento del usuario en la colección 'users' de Firebase.
- */
-async function obtenerTelefonoDesdeFirebase(usuarioId) {
-    // Si el ID es de ejemplo, usamos el valor local (no hay Firebase)
-    if (usuarioId.startsWith('ejemplo-')) {
-        return null; 
-    }
-    try {
-        // Asume que window.firebaseDoc y window.firebaseGetDoc están definidos
-        const usuarioRef = window.firebaseDoc(window.firebaseDb, 'users', usuarioId);
-        const docSnap = await window.firebaseGetDoc(usuarioRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // El campo real en Firestore es 'phoneNumber'
-            return data.phoneNumber; 
-        } else {
-            console.warn(`[FB Fetch] No se encontró el documento para el ID: ${usuarioId}`);
-            return null;
-        }
-    } catch (error) {
-        console.error('[FB Fetch] Error al obtener el teléfono desde Firebase:', error);
-        return null;
-    }
-}
-
-
 
 function mostrarCarga() {
     usersGrid.style.display = 'none';
@@ -463,7 +431,6 @@ function actualizarEstadisticas() {
     countPending.textContent = totalPendientes;
 }
 
-// Reemplaza la función abrirModalEdicion (cerca de la línea 452)
 function abrirModalEdicion(usuarioId) {
     usuarioSeleccionado = usuarios.find(u => u.id === usuarioId);
     
@@ -472,17 +439,11 @@ function abrirModalEdicion(usuarioId) {
         return;
     }
     
-    // 1. Obtener el número original
-    let telefonoOriginal = String(usuarioSeleccionado.telefono || '');
-    
-    // 2. Limpiar el número: Quitar '+' al inicio y todos los espacios
-    let telefonoLimpioParaInput = telefonoOriginal.replace(/\s/g, '').replace(/^\+/, '');
-    
     // Llenar el modal con los datos del usuario
     modalUserName.textContent = usuarioSeleccionado.nombre;
     modalUserEmail.textContent = usuarioSeleccionado.email;
-    phoneInput.value = telefonoLimpioParaInput; // <-- Mostrar número sin '+'
-
+    phoneInput.value = usuarioSeleccionado.telefono;
+    
     // Mostrar el modal
     editModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -493,52 +454,43 @@ function abrirModalEdicion(usuarioId) {
         phoneInput.select();
     }, 100);
 }
-// CORRECCIÓN: Se eliminó la limpieza de usuarioSeleccionado de aquí.
+
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // Se elimina: usuarioSeleccionado = null;
+    // *** CAMBIO: Ya NO establecemos usuarioSeleccionado a null aquí, para que esté disponible en el modal de confirmación. ***
+    // usuarioSeleccionado = null; 
 }
 
-// Reemplaza la función mostrarModalConfirmacion (cerca de la línea 493)
 async function mostrarModalConfirmacion() {
-    // Tomamos el valor del input (que ahora está sin '+')
-    let numeroTelefonoLimpio = phoneInput.value.trim();
+    const numeroTelefono = phoneInput.value.trim();
     
-    // 1. Comprobación de usuario
-    if (!usuarioSeleccionado) {
-        console.error('No hay usuario seleccionado para confirmar.');
-        return;
-    }
-
-    if (!numeroTelefonoLimpio) {
+    if (!numeroTelefono) {
         alert('Por favor, ingresa un número de teléfono válido');
         phoneInput.focus();
         return;
     }
     
-    // 2. Formatear para validación y guardado (AÑADIR EL '+')
-    let numeroTelefonoCompleto = numeroTelefonoLimpio;
-    if (!numeroTelefonoCompleto.startsWith('+')) {
-        numeroTelefonoCompleto = `+${numeroTelefonoCompleto}`;
-    }
-
-    if (!validarNumeroTelefono(numeroTelefonoCompleto)) { 
+    if (!validarNumeroTelefono(numeroTelefono)) {
         alert('Por favor, ingresa un número de teléfono válido con código de país');
         phoneInput.focus();
         return;
     }
     
-    // 3. Actualizar el número en el objeto global y Firebase con el '+'
-    if (usuarioSeleccionado) {
-        usuarioSeleccionado.telefono = numeroTelefonoCompleto;
+    // *** CAMBIO: Verificar que el usuario esté seleccionado antes de continuar ***
+    if (!usuarioSeleccionado) {
+        alert('Error: No hay usuario seleccionado.');
+        cerrarModalEdicion(); // Usamos la función modificada que no limpia usuarioSeleccionado
+        return;
     }
+
+    // Actualizar el número en el usuario seleccionado
+    usuarioSeleccionado.telefono = numeroTelefono;
     
     // Intentar actualizar en Firebase si es posible
     if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
         try {
-            // Guardar en Firebase con el '+'
-            const actualizado = await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, numeroTelefonoCompleto);
+            const actualizado = await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, numeroTelefono);
             if (actualizado) {
                 console.log('Teléfono actualizado en Firebase');
             }
@@ -547,12 +499,13 @@ async function mostrarModalConfirmacion() {
         }
     }
     
-    // 4. Llenar el modal de confirmación
+    // Llenar el modal de confirmación
     confirmUserName.textContent = usuarioSeleccionado.nombre;
-    confirmPhoneNumber.textContent = numeroTelefonoCompleto; // Mostrar con '+' para confirmar
+    confirmPhoneNumber.textContent = numeroTelefono;
     
-    // 5. Cerrar modal de edición y abrir modal de confirmación
-    cerrarModalEdicion();
+    // Cerrar modal de edición y abrir modal de confirmación
+    // *** CAMBIO: Ocultamos el modal de edición directamente, NO llamamos a cerrarModalEdicion() ***
+    editModal.style.display = 'none'; 
     confirmModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
@@ -560,6 +513,8 @@ async function mostrarModalConfirmacion() {
 function cerrarModalConfirmacion() {
     confirmModal.style.display = 'none';
     document.body.style.overflow = 'auto';
+    // *** CAMBIO: Limpiamos usuarioSeleccionado SÓLO si se cancela la confirmación. ***
+    usuarioSeleccionado = null;
 }
 
 function validarNumeroTelefono(numero) {
@@ -568,71 +523,33 @@ function validarNumeroTelefono(numero) {
     return regex.test(numero.replace(/\s/g, ''));
 }
 
-/**
- * FUNCIÓN REEMPLAZADA: Ahora obtiene el número directamente de Firebase 
- * para garantizar que sea el valor actualizado. Quita el '+' y los espacios.
- */
-async function abrirWhatsApp() {
-    
-    // 1. COMPROBACIÓN DE SEGURIDAD
-    if (!usuarioSeleccionado) { 
-        console.error("Error: No se ha seleccionado un usuario para WhatsApp.");
-        mostrarNotificacion('Error: No se pudo obtener la información del usuario.', 'error');
-        cerrarModalConfirmacion();
-        return; 
-    }
-
-    // 2. OBTENER EL NÚMERO MÁS RECIENTE DIRECTAMENTE DESDE FIREBASE
-    const telefonoFirebase = await obtenerTelefonoDesdeFirebase(usuarioSeleccionado.id);
-
-    // Usar el valor de Firebase, o el valor local (que ya fue actualizado por el input) como fallback
-    const telefonoAUsar = telefonoFirebase || usuarioSeleccionado.telefono;
-    
-    // --- DIAGNÓSTICO ---
-    console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
-    console.log('1. ID de Usuario:', usuarioSeleccionado.id);
-    console.log('2. Teléfono obtenido de Firebase:', telefonoFirebase);
-    console.log('3. Teléfono local (Fallback):', usuarioSeleccionado.telefono);
-    
-    // 3. LIMPIEZA DEL NÚMERO: Eliminar espacios y el '+' inicial.
-    const telefonoCompleto = String(telefonoAUsar || '');
-    
-    // Eliminar espacios (\s/g) Y el '+' al inicio (^/+)
-    let numeroLimpio = telefonoCompleto.replace(/\s/g, '').replace(/^\+/, ''); 
-    
-    const numeroTelefono = numeroLimpio; 
-    
-    console.log('4. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
-
-    // Comprobación final de que tenemos un número utilizable
-    if (!numeroTelefono || numeroTelefono.length < 8) { 
-        console.error("Error: El número de teléfono final no es válido. Valor usado:", numeroTelefono);
-        mostrarNotificacion('Error: El número de teléfono no es válido. Revise el formato o que el campo exista en Firebase.', 'error');
+function abrirWhatsApp() {
+    // *** CAMBIO: Verificar antes de usar, aunque el flujo ya lo asegura ***
+    if (!usuarioSeleccionado) {
+        console.error('Error: usuarioSeleccionado es null en abrirWhatsApp');
         cerrarModalConfirmacion();
         return;
     }
 
+    const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
-    // 4. Crear URL de WhatsApp (usando el número sin '+')
+    // Crear URL de WhatsApp
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     
-    // 5. Abrir WhatsApp en una nueva ventana
-    const newWindow = window.open(urlWhatsApp, '_blank');
+    // Abrir WhatsApp en una nueva ventana
+    window.open(urlWhatsApp, '_blank');
     
-    // 6. Cerrar el modal
+    // Cerrar el modal
     cerrarModalConfirmacion();
-
-    // 7. Manejar el bloqueador y mostrar notificación
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        mostrarNotificacion('El navegador bloqueó la ventana de WhatsApp. Por favor, permite los pop-ups para este sitio.', 'error');
-    } else {
-        mostrarNotificacion('WhatsApp abierto correctamente', 'success');
-    }
     
-    // 8. LIMPIEZA FINAL: Resetear la variable global.
-    usuarioSeleccionado = null; 
+    // *** CAMBIO: Limpiamos usuarioSeleccionado después de abrir WhatsApp. ***
+    usuarioSeleccionado = null;
+    
+    // Mostrar mensaje de éxito
+    mostrarNotificacion('WhatsApp abierto correctamente', 'success');
 }
+
 function formatearFecha(fecha) {
     const fechaObj = new Date(fecha);
     return fechaObj.toLocaleDateString('es-ES', {
@@ -646,6 +563,10 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     // Crear elemento de notificación
     const notificacion = document.createElement('div');
     notificacion.className = `notificacion notificacion-${tipo}`;
+    notificacion.innerHTML = `
+        <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        <span>${mensaje}</span>
+    `;
     
     // Estilos para la notificación
     let backgroundColor = '#17a2b8';
@@ -739,8 +660,3 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
-
-
-
-
-
