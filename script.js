@@ -510,7 +510,11 @@ async function mostrarModalConfirmacion() {
         phoneInput.focus();
         return;
     }
-    
+
+    console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
+    console.log('1. ID de Usuario:', usuarioSeleccionado.id);
+    console.log('2. Teléfono obtenido de Firebase:', telefonoFirebase);
+    console.log('3. Teléfono local (Fallback):', usuarioSeleccionado.telefono);
     // 2. Actualizar el número en el objeto global (esto es lo que leerá abrirWhatsApp)
     usuarioSeleccionado.telefono = numeroTelefono;
     
@@ -718,5 +722,6 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
 
