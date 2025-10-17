@@ -280,7 +280,7 @@ function configurarEventListeners() {
     
     confirmModal.addEventListener('click', function(e) {
         if (e.target === confirmModal) {
-            cerrarModalConfirmacion();
+           // cerrarModalConfirmacion();
         }
     });
     
@@ -659,4 +659,5 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
