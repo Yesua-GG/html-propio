@@ -521,33 +521,27 @@ function validarNumeroTelefono(numero) {
 }
 
 function abrirWhatsApp() {
-    // Implementación del chequeo de null para robustez.
-     console.log(usuarioSeleccionado);
     if (!usuarioSeleccionado) {
-        console.error('Error: usuarioSeleccionado es null. No se puede abrir WhatsApp.');
-        
-        return;
+        console.error("Error: usuarioSeleccionado is null.");
+        // Optionally show an error message to the user
+        mostrarNotificacion('Error al abrir WhatsApp: No se seleccionó un usuario', 'error');
+        return; // Stop execution if usuarioSeleccionado is null
     }
 
-    // Usar la propiedad 'telefono' que ya fue actualizada en mostrarModalConfirmacion.
     const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
-    
+
     // Crear URL de WhatsApp
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
-    
+
     // Abrir WhatsApp en una nueva ventana
     window.open(urlWhatsApp, '_blank');
-    
+
     // Cerrar el modal
     cerrarModalConfirmacion();
-    
-    // Limpiamos usuarioSeleccionado después de usarlo.
-    usuarioSeleccionado = null;
-    
+
     // Mostrar mensaje de éxito
     mostrarNotificacion('WhatsApp abierto correctamente', 'success');
-    cerrarModalConfirmacion();
 }
 
 function formatearFecha(fecha) {
@@ -660,6 +654,7 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
 
 
