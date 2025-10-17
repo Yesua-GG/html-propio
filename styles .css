@@ -159,6 +159,9 @@ body {
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
     border: 2px solid transparent;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow: hidden;
 }
 
 .user-card:hover {
@@ -217,6 +220,37 @@ body {
 .detail-item span {
     color: #666;
     font-size: 0.9rem;
+}
+
+/* Make detail text wrap and avoid overflow */
+.detail-item span {
+    display: inline-block;
+    max-width: calc(100% - 28px);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Force single column layout on small screens */
+@media (max-width: 700px) {
+    .users-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .user-card {
+        padding: 18px;
+    }
+    .user-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .user-header {
+        align-items: center;
+        text-align: center;
+    }
+    .user-info {
+        margin-left: 0;
+    }
 }
 
 .contact-btn {
