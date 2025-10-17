@@ -668,3 +668,79 @@ body {
         margin-bottom: 15px;
     }
 }
+
+/* Android / Mobile improvements */
+:root {
+    --touch-padding: 14px;
+    --large-font: 1.05rem;
+}
+
+/* Safe area for devices with notch */
+body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Increase tap targets */
+.contact-btn, .marked-btn, .filter-tab, .btn {
+    padding: calc(var(--touch-padding) + 4px) 18px;
+    font-size: var(--large-font);
+    border-radius: 12px;
+}
+
+/* Make modals more friendly on Android: full screen content and larger close hit area */
+.modal-content {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header, .modal-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.modal-body {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 16px 18px 22px 18px;
+}
+
+.close-btn {
+    padding: 10px;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Larger avatars and spacing */
+.user-avatar { width: 72px; height: 72px; font-size: 1.6rem; }
+.user-info h3 { font-size: 1.15rem; }
+
+/* Improve readability on mobile */
+.search-box input { padding: 14px 14px 14px 54px; font-size: 1rem; }
+.users-grid { gap: 14px; }
+
+/* Make action buttons sticky at bottom on small screens */
+@media (max-width: 600px) {
+    .modal-footer { position: sticky; bottom: 0; background: white; padding-bottom: env(safe-area-inset-bottom); }
+    .action-buttons { position: static; }
+    .users-grid { grid-template-columns: 1fr; }
+}
+
+/* Improve touch feedback */
+.contact-btn, .marked-btn { -webkit-tap-highlight-color: rgba(0,0,0,0.05); }
+
+/* Slightly larger base font on Android */
+@media (max-width: 900px) {
+    body { font-size: 16px; }
+}
+
