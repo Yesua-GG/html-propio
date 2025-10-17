@@ -522,6 +522,7 @@ function validarNumeroTelefono(numero) {
 
 function abrirWhatsApp() {
     // Implementación del chequeo de null para robustez.
+     console.log(usuarioSeleccionado);
     if (!usuarioSeleccionado) {
         console.error('Error: usuarioSeleccionado es null. No se puede abrir WhatsApp.');
         
@@ -659,5 +660,6 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
 
