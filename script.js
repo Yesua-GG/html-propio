@@ -458,7 +458,7 @@ function abrirModalEdicion(usuarioId) {
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // *** CAMBIO: Ya NO establecemos usuarioSeleccionado a null aquí, para que esté disponible en el modal de confirmación. ***
+    // *** Lógica anterior de limpieza: se remueve para evitar el error.
     // usuarioSeleccionado = null; 
 }
 
@@ -476,15 +476,15 @@ async function mostrarModalConfirmacion() {
         phoneInput.focus();
         return;
     }
-    
-    // *** CAMBIO: Verificar que el usuario esté seleccionado antes de continuar ***
+
     if (!usuarioSeleccionado) {
-        alert('Error: No hay usuario seleccionado.');
-        cerrarModalEdicion(); // Usamos la función modificada que no limpia usuarioSeleccionado
+        console.error('Error: No hay usuario seleccionado para actualizar.');
+        cerrarModalEdicion(); 
         return;
     }
-
-    // Actualizar el número en el usuario seleccionado
+    
+    // *** LÓGICA DE GUARDADO: Actualizar la propiedad 'telefono' del usuario seleccionado
+    //     para que esté disponible en abrirWhatsApp.
     usuarioSeleccionado.telefono = numeroTelefono;
     
     // Intentar actualizar en Firebase si es posible
@@ -503,8 +503,9 @@ async function mostrarModalConfirmacion() {
     confirmUserName.textContent = usuarioSeleccionado.nombre;
     confirmPhoneNumber.textContent = numeroTelefono;
     
-    // Cerrar modal de edición y abrir modal de confirmación
-    // *** CAMBIO: Ocultamos el modal de edición directamente, NO llamamos a cerrarModalEdicion() ***
+    // Cerrar modal de edición (ocultar) y abrir modal de confirmación
+    // *** CAMBIO: Solo se oculta el modal de edición, NO se llama a cerrarModalEdicion()
+    //     para mantener 'usuarioSeleccionado' con el nuevo 'telefono'.
     editModal.style.display = 'none'; 
     confirmModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -513,7 +514,7 @@ async function mostrarModalConfirmacion() {
 function cerrarModalConfirmacion() {
     confirmModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // *** CAMBIO: Limpiamos usuarioSeleccionado SÓLO si se cancela la confirmación. ***
+    // Se limpia la selección si se cancela la acción.
     usuarioSeleccionado = null;
 }
 
@@ -524,13 +525,14 @@ function validarNumeroTelefono(numero) {
 }
 
 function abrirWhatsApp() {
-    // *** CAMBIO: Verificar antes de usar, aunque el flujo ya lo asegura ***
+    // *** CAMBIO DE LÓGICA: Se asegura que 'usuarioSeleccionado' no sea null antes de usarlo. ***
     if (!usuarioSeleccionado) {
-        console.error('Error: usuarioSeleccionado es null en abrirWhatsApp');
+        console.error('Error: usuarioSeleccionado es null. No se puede abrir WhatsApp.');
         cerrarModalConfirmacion();
         return;
     }
 
+    // Se usa la variable 'usuarioSeleccionado.telefono' actualizada en mostrarModalConfirmacion.
     const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
@@ -540,10 +542,10 @@ function abrirWhatsApp() {
     // Abrir WhatsApp en una nueva ventana
     window.open(urlWhatsApp, '_blank');
     
-    // Cerrar el modal
+    // Cerrar el modal (esto también limpia el overflow).
     cerrarModalConfirmacion();
     
-    // *** CAMBIO: Limpiamos usuarioSeleccionado después de abrir WhatsApp. ***
+    // *** LÓGICA DE LIMPIEZA FINAL: Se limpia 'usuarioSeleccionado' después de abrir WhatsApp.
     usuarioSeleccionado = null;
     
     // Mostrar mensaje de éxito
