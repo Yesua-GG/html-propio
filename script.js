@@ -521,6 +521,8 @@ function validarNumeroTelefono(numero) {
 }
 
 function abrirWhatsApp() {
+    console.log(usuarioSeleccionado); // Add this line
+    const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
     if (!usuarioSeleccionado) {
         console.error("Error: usuarioSeleccionado is null.");
         // Optionally show an error message to the user
@@ -654,6 +656,7 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
 
 
