@@ -505,8 +505,8 @@ function validarNumeroTelefono(numero) {
 }
 
 /**
- * MODIFICACIÓN CLAVE: Se hace la lectura del teléfono de forma segura para evitar el TypeError.
- * La variable numeroTelefono ahora usa el valor previamente guardado desde phoneInput.
+ * MODIFICACIÓN CLAVE: Se agregó la comprobación de null al inicio 
+ * y los logs de diagnóstico solicitados.
  */
 async function abrirWhatsApp() {
     
@@ -517,11 +517,20 @@ async function abrirWhatsApp() {
         cerrarModalConfirmacion();
         return; 
     }
-
-    // 2. LECTURA Y LIMPIEZA SEGURA del teléfono (CORRECCIÓN para el TypeError)
-    // Se asegura que usuarioSeleccionado.telefono es una cadena antes de llamar a .replace()
+    
+    // **>>>>> LOGS DE DIAGNÓSTICO AÑADIDOS <<<<<**
+    console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
+    console.log('1. Valor de usuarioSeleccionado:', usuarioSeleccionado);
+    console.log('2. Tipo de usuarioSeleccionado.telefono:', typeof usuarioSeleccionado.telefono);
+    console.log('3. Valor crudo de usuarioSeleccionado.telefono:', usuarioSeleccionado.telefono);
+    
+    // 2. LECTURA Y LIMPIEZA SEGURA del teléfono (CORRECCIÓN)
+    // Se usa String() para asegurar que el valor sea un string ANTES de llamar a .replace()
     const telefonoCompleto = String(usuarioSeleccionado.telefono || '');
     const numeroTelefono = telefonoCompleto.replace(/\s/g, ''); 
+
+    // **>>>>> LOG FINAL <<<<<**
+    console.log('4. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
 
     if (!validarNumeroTelefono(numeroTelefono)) {
         console.error("Error: El número de teléfono no es válido o está vacío. Valor usado:", numeroTelefono);
@@ -535,7 +544,7 @@ async function abrirWhatsApp() {
     // 3. Intentar actualizar en Firebase ANTES de abrir WhatsApp
     if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
         try {
-            // Se usa el valor limpio que se acaba de confirmar
+            // Se usa el valor completo (con espacios, si los tiene) para guardar
             await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, telefonoCompleto);
         } catch (error) {
             console.warn('Advertencia: No se pudo actualizar el teléfono en Firebase, pero se continúa con WhatsApp.');
