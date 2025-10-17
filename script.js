@@ -459,21 +459,20 @@ function abrirModalEdicion(usuarioId) {
     }, 100);
 }
 
-// 📌 MODIFICACIÓN: Ya NO anula usuarioSeleccionado aquí.
+// Ya NO anula usuarioSeleccionado aquí.
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
 }
 
-// 📌 MODIFICACIÓN: Ya NO anula usuarioSeleccionado aquí.
+// Ya NO anula usuarioSeleccionado aquí.
 function cerrarModalConfirmacion() {
     confirmModal.style.display = 'none';
     document.body.style.overflow = 'auto';
 }
 
 /**
- * Esta función SOLO valida el teléfono, actualiza el objeto local
- * y abre el modal de confirmación.
+ * Esta función toma el valor de phoneInput, lo valida y lo guarda en el objeto global.
  */
 function mostrarModalConfirmacion() {
     const numeroTelefono = phoneInput.value.trim();
@@ -484,11 +483,13 @@ function mostrarModalConfirmacion() {
         return;
     }
     
-    // Actualizar el número en el usuario seleccionado (solo localmente por ahora)
-    usuarioSeleccionado.telefono = numeroTelefono;
+    // Actualizar el número en el usuario seleccionado (guarda el valor del input para abrirWhatsApp)
+    if (usuarioSeleccionado) {
+        usuarioSeleccionado.telefono = numeroTelefono;
+    }
     
     // Llenar el modal de confirmación
-    confirmUserName.textContent = usuarioSeleccionado.nombre;
+    confirmUserName.textContent = usuarioSeleccionado ? usuarioSeleccionado.nombre : 'Usuario Desconocido';
     confirmPhoneNumber.textContent = numeroTelefono;
     
     // Cerrar modal de edición y abrir modal de confirmación
@@ -504,48 +505,60 @@ function validarNumeroTelefono(numero) {
 }
 
 /**
- * 📌 MODIFICACIÓN CLAVE: Se agregó la comprobación de null al inicio 
- * y se movió la anulación de usuarioSeleccionado al final.
+ * MODIFICACIÓN CLAVE: Se hace la lectura del teléfono de forma segura para evitar el TypeError.
+ * La variable numeroTelefono ahora usa el valor previamente guardado desde phoneInput.
  */
 async function abrirWhatsApp() {
     
-    // 1. COMPROBACIÓN DE SEGURIDAD (CORRIGE EL ERROR DE "reading 'telefono'")
-    if (!usuarioSeleccionado || !usuarioSeleccionado.telefono) {
-        console.error("Error: No se ha seleccionado un usuario o falta el teléfono.");
+    // 1. COMPROBACIÓN DE SEGURIDAD
+    if (!usuarioSeleccionado) { 
+        console.error("Error: No se ha seleccionado un usuario.");
         mostrarNotificacion('Error: No se pudo obtener la información del usuario. Intente nuevamente.', 'error');
         cerrarModalConfirmacion();
         return; 
     }
 
-    const numeroTelefono = usuarioSeleccionado.telefono.replace(/\s/g, '');
+    // 2. LECTURA Y LIMPIEZA SEGURA del teléfono (CORRECCIÓN para el TypeError)
+    // Se asegura que usuarioSeleccionado.telefono es una cadena antes de llamar a .replace()
+    const telefonoCompleto = String(usuarioSeleccionado.telefono || '');
+    const numeroTelefono = telefonoCompleto.replace(/\s/g, ''); 
+
+    if (!validarNumeroTelefono(numeroTelefono)) {
+        console.error("Error: El número de teléfono no es válido o está vacío. Valor usado:", numeroTelefono);
+        mostrarNotificacion('Error: El número de teléfono no es válido. Revise el formato.', 'error');
+        cerrarModalConfirmacion();
+        return;
+    }
+    
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
-    // 2. Intentar actualizar en Firebase ANTES de abrir WhatsApp
+    // 3. Intentar actualizar en Firebase ANTES de abrir WhatsApp
     if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
         try {
-            await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, usuarioSeleccionado.telefono);
+            // Se usa el valor limpio que se acaba de confirmar
+            await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, telefonoCompleto);
         } catch (error) {
             console.warn('Advertencia: No se pudo actualizar el teléfono en Firebase, pero se continúa con WhatsApp.');
         }
     }
     
-    // 3. Crear URL de WhatsApp
+    // 4. Crear URL de WhatsApp
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     
-    // 4. Abrir WhatsApp en una nueva ventana (Esta acción está ligada al clic)
+    // 5. Abrir WhatsApp en una nueva ventana
     const newWindow = window.open(urlWhatsApp, '_blank');
     
-    // 5. Cerrar el modal
+    // 6. Cerrar el modal
     cerrarModalConfirmacion();
     
-    // 6. Manejar el bloqueador y mostrar notificación
+    // 7. Manejar el bloqueador y mostrar notificación
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
         mostrarNotificacion('El navegador bloqueó la ventana de WhatsApp. Por favor, permite los pop-ups para este sitio.', 'error');
     } else {
         mostrarNotificacion('WhatsApp abierto correctamente', 'success');
     }
 
-    // 7. LIMPIEZA FINAL: Resetear la variable global después de completar el proceso
+    // 8. LIMPIEZA FINAL: Resetear la variable global después de completar el proceso
     usuarioSeleccionado = null; 
 }
 
