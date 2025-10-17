@@ -455,20 +455,17 @@ function abrirModalEdicion(usuarioId) {
     }, 100);
 }
 
-/**
- * ❌ CORRECCIÓN: Se ELIMINA la línea `usuarioSeleccionado = null;` de aquí.
- * La variable debe seguir siendo válida para el siguiente modal.
- */
+// CORRECCIÓN: Se eliminó la limpieza de usuarioSeleccionado de aquí.
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // usuarioSeleccionado = null; // ELIMINADA ESTA LÍNEA
+    // usuarioSeleccionado = null; // Línea eliminada
 }
 
 async function mostrarModalConfirmacion() {
     const numeroTelefono = phoneInput.value.trim();
     
-    // 1. Comprobación de usuario (para evitar el error si se intenta forzar el flujo)
+    // 1. Comprobación de usuario
     if (!usuarioSeleccionado) {
         console.error('No hay usuario seleccionado para confirmar.');
         return;
@@ -523,7 +520,7 @@ function validarNumeroTelefono(numero) {
 }
 
 /**
- * ✅ FUNCIÓN CORREGIDA Y CON LOGS DE DIAGNÓSTICO
+ * FUNCIÓN CORREGIDA: Ahora elimina el '+' inicial y los espacios.
  */
 function abrirWhatsApp() {
     
@@ -535,21 +532,26 @@ function abrirWhatsApp() {
         return; 
     }
 
-    // **>>>>> LOGS DE DIAGNÓSTICO AÑADIDOS <<<<<**
+    // --- DIAGNÓSTICO ---
     console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
-    console.log('1. Valor de usuarioSeleccionado:', usuarioSeleccionado);
-    console.log('2. Tipo de usuarioSeleccionado.telefono:', typeof usuarioSeleccionado.telefono);
-    console.log('3. Valor crudo de usuarioSeleccionado.telefono:', usuarioSeleccionado.telefono);
+    console.log('1. Valor de usuarioSeleccionado.telefono (completo):', usuarioSeleccionado.telefono);
     
-    // 2. LECTURA Y LIMPIEZA SEGURA del teléfono (CORRECCIÓN de la línea 516)
-    // Se usa String() para asegurar que el valor sea un string ANTES de llamar a .replace()
+    // 2. LECTURA Y LIMPIEZA DEL NÚMERO (Implementación del requisito)
     const telefonoCompleto = String(usuarioSeleccionado.telefono || '');
-    const numeroTelefono = telefonoCompleto.replace(/\s/g, ''); 
     
-    // **>>>>> LOG FINAL <<<<<**
-    console.log('4. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
+    // Eliminar espacios
+    let numeroLimpio = telefonoCompleto.replace(/\s/g, ''); 
+    
+    // Eliminar el '+' si existe al inicio
+    if (numeroLimpio.startsWith('+')) {
+        numeroLimpio = numeroLimpio.substring(1);
+    }
+    
+    const numeroTelefono = numeroLimpio; // Número listo para el enlace de wa.me
+    
+    console.log('2. Valor limpio de numeroTelefono (usado en wa.me):', numeroTelefono);
 
-    if (!validarNumeroTelefono(numeroTelefono)) {
+    if (!validarNumeroTelefono(`+${numeroTelefono}`)) { // Se usa el '+' para la validación interna
         console.error("Error: El número de teléfono no es válido o está vacío. Valor usado:", numeroTelefono);
         mostrarNotificacion('Error: El número de teléfono no es válido. Revise el formato.', 'error');
         cerrarModalConfirmacion();
@@ -558,7 +560,7 @@ function abrirWhatsApp() {
 
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
     
-    // 3. Crear URL de WhatsApp
+    // 3. Crear URL de WhatsApp (usando el número sin '+')
     const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
     
     // 4. Abrir WhatsApp en una nueva ventana
@@ -574,7 +576,7 @@ function abrirWhatsApp() {
         mostrarNotificacion('WhatsApp abierto correctamente', 'success');
     }
     
-    // 7. LIMPIEZA FINAL: Ahora SÍ es seguro resetear la variable global.
+    // 7. LIMPIEZA FINAL: Resetear la variable global.
     usuarioSeleccionado = null; 
 }
 
