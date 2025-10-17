@@ -33,13 +33,6 @@ const modalUserEmail = document.getElementById('modalUserEmail');
 const cancelBtn = document.getElementById('cancelBtn');
 const confirmBtn = document.getElementById('confirmBtn');
 
-// Elementos del modal de confirmación
-const confirmModal = document.getElementById('confirmModal');
-const confirmUserName = document.getElementById('confirmUserName');
-const confirmPhoneNumber = document.getElementById('confirmPhoneNumber');
-const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
-const finalConfirmBtn = document.getElementById('finalConfirmBtn');
-
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
     inicializarApp();
@@ -245,15 +238,9 @@ function configurarEventListeners() {
     searchInput.addEventListener('input', filtrarUsuarios);
     closeModal.addEventListener('click', cerrarModalEdicion);
     cancelBtn.addEventListener('click', cerrarModalEdicion);
-    confirmBtn.addEventListener('click', mostrarModalConfirmacion);
-    cancelConfirmBtn.addEventListener('click', cerrarModalConfirmacion);
-    finalConfirmBtn.addEventListener('click', abrirWhatsApp);
-
-    editModal.addEventListener('click', e => { if (e.target === editModal) cerrarModalEdicion(); });
-    confirmModal.addEventListener('click', e => { if (e.target === confirmModal) cerrarModalConfirmacion(); });
-
+    confirmBtn.addEventListener('click', abrirWhatsAppDirecto);
     phoneInput.addEventListener('keypress', e => {
-        if (e.key === 'Enter') mostrarModalConfirmacion();
+        if (e.key === 'Enter') abrirWhatsAppDirecto();
     });
 }
 
@@ -279,19 +266,27 @@ function abrirModalEdicion(usuarioId) {
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    // usuarioSeleccionado = null; // 🔧 NO lo borramos para evitar error
 }
 
-async function mostrarModalConfirmacion() {
+// ====================== WHATSAPP DIRECTO ======================
+
+async function abrirWhatsAppDirecto() {
     const numeroTelefono = phoneInput.value.trim();
+
     if (!numeroTelefono) {
         alert('Por favor, ingresa un número de teléfono válido');
         phoneInput.focus();
         return;
     }
+
     if (!validarNumeroTelefono(numeroTelefono)) {
-        alert('Por favor, ingresa un número de teléfono válido con código de país');
+        alert('Por favor, ingresa un número válido con código de país (ej: +573001234567)');
         phoneInput.focus();
+        return;
+    }
+
+    if (!usuarioSeleccionado) {
+        mostrarNotificacion('Error: No se seleccionó ningún usuario', 'error');
         return;
     }
 
@@ -300,42 +295,17 @@ async function mostrarModalConfirmacion() {
     if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
         try {
             await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, numeroTelefono);
-        } catch {
-            console.log('No se pudo actualizar en Firebase');
+        } catch (error) {
+            console.warn('No se pudo actualizar teléfono en Firebase:', error);
         }
     }
 
-    confirmUserName.textContent = usuarioSeleccionado.nombre;
-    confirmPhoneNumber.textContent = numeroTelefono;
-    cerrarModalEdicion();
-    confirmModal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-}
-
-function cerrarModalConfirmacion() {
-    confirmModal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-// ====================== WHATSAPP ======================
-
-function abrirWhatsApp() {
-    if (!usuarioSeleccionado) {
-        console.error("Error: usuarioSeleccionado es null.");
-        mostrarNotificacion('Error: No se seleccionó ningún usuario', 'error');
-        return;
-    }
-
-    const numeroTelefono = usuarioSeleccionado.telefono?.replace(/\s/g, '');
-    if (!numeroTelefono) {
-        mostrarNotificacion('Número de teléfono no válido', 'error');
-        return;
-    }
-
+    const numero = usuarioSeleccionado.telefono.replace(/\s/g, '');
     const mensaje = encodeURIComponent(`Hola ${usuarioSeleccionado.nombre}, te contacto desde nuestro sistema de gestión.`);
-    const urlWhatsApp = `https://wa.me/${numeroTelefono}?text=${mensaje}`;
+    const urlWhatsApp = `https://wa.me/${numero}?text=${mensaje}`;
     window.open(urlWhatsApp, '_blank');
-    cerrarModalConfirmacion();
+
+    cerrarModalEdicion();
     mostrarNotificacion('WhatsApp abierto correctamente', 'success');
 }
 
@@ -471,7 +441,7 @@ function actualizarEstadisticas() {
 
 console.log('Sistema de contacto WhatsApp con Firebase cargado correctamente');
 console.log('Firebase disponible:', !!window.firebaseDb);
-console.log('Funciones disponibles: cargarUsuariosDesdeFirebase(), agregarUsuario(), exportarUsuarios()');
+console.log('Funciones disponibles: cargarUsuariosDesdeFirebase(), marcarComoContactado(), desmarcarContactado()');
 
 window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
