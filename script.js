@@ -463,6 +463,7 @@ function actualizarEstadisticas() {
     countPending.textContent = totalPendientes;
 }
 
+// Reemplaza la función abrirModalEdicion (cerca de la línea 452)
 function abrirModalEdicion(usuarioId) {
     usuarioSeleccionado = usuarios.find(u => u.id === usuarioId);
     
@@ -471,11 +472,17 @@ function abrirModalEdicion(usuarioId) {
         return;
     }
     
+    // 1. Obtener el número original
+    let telefonoOriginal = String(usuarioSeleccionado.telefono || '');
+    
+    // 2. Limpiar el número: Quitar '+' al inicio y todos los espacios
+    let telefonoLimpioParaInput = telefonoOriginal.replace(/\s/g, '').replace(/^\+/, '');
+    
     // Llenar el modal con los datos del usuario
     modalUserName.textContent = usuarioSeleccionado.nombre;
     modalUserEmail.textContent = usuarioSeleccionado.email;
-    phoneInput.value = usuarioSeleccionado.telefono;
-    
+    phoneInput.value = telefonoLimpioParaInput; // <-- Mostrar número sin '+'
+
     // Mostrar el modal
     editModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -486,7 +493,6 @@ function abrirModalEdicion(usuarioId) {
         phoneInput.select();
     }, 100);
 }
-
 // CORRECCIÓN: Se eliminó la limpieza de usuarioSeleccionado de aquí.
 function cerrarModalEdicion() {
     editModal.style.display = 'none';
@@ -494,8 +500,10 @@ function cerrarModalEdicion() {
     // Se elimina: usuarioSeleccionado = null;
 }
 
+// Reemplaza la función mostrarModalConfirmacion (cerca de la línea 493)
 async function mostrarModalConfirmacion() {
-    const numeroTelefono = phoneInput.value.trim();
+    // Tomamos el valor del input (que ahora está sin '+')
+    let numeroTelefonoLimpio = phoneInput.value.trim();
     
     // 1. Comprobación de usuario
     if (!usuarioSeleccionado) {
@@ -503,29 +511,34 @@ async function mostrarModalConfirmacion() {
         return;
     }
 
-    if (!numeroTelefono) {
+    if (!numeroTelefonoLimpio) {
         alert('Por favor, ingresa un número de teléfono válido');
         phoneInput.focus();
         return;
     }
     
-    if (!validarNumeroTelefono(numeroTelefono)) {
+    // 2. Formatear para validación y guardado (AÑADIR EL '+')
+    let numeroTelefonoCompleto = numeroTelefonoLimpio;
+    if (!numeroTelefonoCompleto.startsWith('+')) {
+        numeroTelefonoCompleto = `+${numeroTelefonoCompleto}`;
+    }
+
+    if (!validarNumeroTelefono(numeroTelefonoCompleto)) { 
         alert('Por favor, ingresa un número de teléfono válido con código de país');
         phoneInput.focus();
         return;
     }
-
-    console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
-    console.log('1. ID de Usuario:', usuarioSeleccionado.id);
-    console.log('2. Teléfono obtenido de Firebase:', telefonoFirebase);
-    console.log('3. Teléfono local (Fallback):', usuarioSeleccionado.telefono);
-    // 2. Actualizar el número en el objeto global (esto es lo que leerá abrirWhatsApp)
-    usuarioSeleccionado.telefono = numeroTelefono;
+    
+    // 3. Actualizar el número en el objeto global y Firebase con el '+'
+    if (usuarioSeleccionado) {
+        usuarioSeleccionado.telefono = numeroTelefonoCompleto;
+    }
     
     // Intentar actualizar en Firebase si es posible
     if (window.firebaseDb && usuarioSeleccionado.id && !usuarioSeleccionado.id.startsWith('ejemplo-')) {
         try {
-            const actualizado = await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, numeroTelefono);
+            // Guardar en Firebase con el '+'
+            const actualizado = await actualizarTelefonoEnFirebase(usuarioSeleccionado.id, numeroTelefonoCompleto);
             if (actualizado) {
                 console.log('Teléfono actualizado en Firebase');
             }
@@ -534,11 +547,11 @@ async function mostrarModalConfirmacion() {
         }
     }
     
-    // 3. Llenar el modal de confirmación
+    // 4. Llenar el modal de confirmación
     confirmUserName.textContent = usuarioSeleccionado.nombre;
-    confirmPhoneNumber.textContent = numeroTelefono;
+    confirmPhoneNumber.textContent = numeroTelefonoCompleto; // Mostrar con '+' para confirmar
     
-    // 4. Cerrar modal de edición y abrir modal de confirmación
+    // 5. Cerrar modal de edición y abrir modal de confirmación
     cerrarModalEdicion();
     confirmModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -726,6 +739,7 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
 
 
