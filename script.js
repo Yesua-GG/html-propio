@@ -524,7 +524,7 @@ function abrirWhatsApp() {
     // Implementación del chequeo de null para robustez.
     if (!usuarioSeleccionado) {
         console.error('Error: usuarioSeleccionado es null. No se puede abrir WhatsApp.');
-        cerrarModalConfirmacion();
+        
         return;
     }
 
@@ -546,6 +546,7 @@ function abrirWhatsApp() {
     
     // Mostrar mensaje de éxito
     mostrarNotificacion('WhatsApp abierto correctamente', 'success');
+    cerrarModalConfirmacion();
 }
 
 function formatearFecha(fecha) {
@@ -658,3 +659,4 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
