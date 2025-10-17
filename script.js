@@ -169,6 +169,10 @@ async function actualizarTelefonoEnFirebase(usuarioId, nuevoTelefono) {
             lastUpdated: new Date().toISOString()
         });
         console.log(`Teléfono actualizado en users para usuario ${usuarioId}`);
+        console.log('--- DIAGNÓSTICO abrirWhatsApp ---');
+    console.log('1. ID de Usuario:', usuarioSeleccionado.id);
+    console.log('2. Teléfono obtenido de Firebase:', telefonoFirebase);
+    console.log('3. Teléfono local (Fallback):', usuarioSeleccionado.telefono);
         return true;
         
     } catch (error) {
@@ -722,6 +726,7 @@ window.cargarUsuariosDesdeFirebase = cargarUsuariosDesdeFirebase;
 window.cambiarTab = cambiarTab;
 window.marcarComoContactado = marcarComoContactado;
 window.desmarcarContactado = desmarcarContactado;
+
 
 
 
