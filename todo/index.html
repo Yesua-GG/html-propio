@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Descarga - Asistente InDrive</title>
+  <meta name="description" content="Página oficial para descargar Asistente InDrive. APK directo y enlace a Google Play.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <img src="images/logo.png" alt="Logo" class="logo"/>
+      <h1>Asistente InDrive</h1>
+      <p class="tag">Asistente para InDrive: optimiza tareas y acciones repetitivas para conductores.</p>
+
+      <div class="cta">
+        <a class="btn primary" id="apk-btn" href="assets/app-latest.apk" download>Descargar APK</a>
+        <a class="btn outline" id="play-btn" href="https://play.google.com/store/apps/details?id=com.warfre.auto_click" target="_blank" rel="noopener">Ver en Google Play</a>
+        <button class="btn outline" id="contact-btn" type="button">Contactar soporte</button>
+      </div>
+
+      <p class="small">¿No estás seguro? Lee la sección de preguntas frecuentes más abajo o contáctanos en <a href="mailto:soporte@tudominio.com">soporte@tudominio.com</a>.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="features">
+      <h2>Características</h2>
+      <ul>
+        <li><strong>Bot para InDrive:</strong> Automatiza acciones repetitivas dentro de la app InDrive usando el servicio de accesibilidad.</li>
+        <li><strong>Perfiles de zonas:</strong> Crea y administra perfiles que contienen tus zonas preferidas, zonas bloqueadas y configuraciones por perfil.</li>
+        <li><strong>Zonas bloqueadas / Zonas Diamante / Zonas Gold:</strong> Define zonas en el mapa para bloquear solicitudes, o marcar zonas premium (Diamante/Gold) con reglas especiales.</li>
+        <li><strong>Precio por km y tramos:</strong> Configura tarifas por kilómetro con múltiples tramos, precio mínimo, precio máximo y variantes inteligentes por distancia o aeropuerto.</li>
+        <li><strong>Gestión de membresías:</strong> Sistema de membresía con días de suscripción, verificación y beneficios exclusivos.</li>
+        <li><strong>Descargas y actualizaciones:</strong> UpdateManager y gestor de descargas para instalar actualizaciones (incluye FileProvider para instalación de APK).</li>
+        <li><strong>Captura de pantalla y OCR:</strong> Funciones para capturar pantalla y procesar texto mediante OCR (cuando aplique).</li>
+        <li><strong>Botón flotante:</strong> Servicio que muestra un botón flotante para controles rápidos mientras la app está activa.</li>
+        <li><strong>Notificaciones push:</strong> Integración con Firebase Cloud Messaging para avisos y comunicaciones.</li>
+        <li><strong>Multilenguaje:</strong> Soporte para varios idiomas (español, inglés, portugués, indonesio, árabe, tamazight, etc.).</li>
+        <li><strong>Optimización y utilidades:</strong> Limpieza de caché, comprobación de permisos, opciones de configuración avanzada y referidos.</li>
+      </ul>
+    </section>
+
+    <section class="release-notes">
+      <h2>Novedades</h2>
+      <ul>
+        <li><strong>Perfiles en zonas bloqueadas:</strong> Ahora puedes crear múltiples perfiles que guardan zonas bloqueadas y alternar entre ellos rápidamente.</li>
+        <li><strong>Más tramos para precio por km:</strong> Se añadieron más tramos configurables para ajustar el precio por kilómetro según distancia/segmento.</li>
+        <li><strong>Mejoras en Zonas Diamante/Gold:</strong> Nuevas opciones para definir radio y ajustes por zona premium.</li>
+        <li><strong>Correcciones de bugs:</strong> Varias correcciones menores y estabilidad mejorada en el gestor de descargas y permisos.</li>
+        <li><strong>Mejoras de rendimiento:</strong> Optimización en el consumo de memoria y tiempos de respuesta del servicio de accesibilidad.</li>
+      </ul>
+      <p class="small">Consulta los archivos README del proyecto para un registro de cambios completo.</p>
+    </section>
+
+    <section class="screenshots">
+      <h2>Capturas</h2>
+      <div class="shots">
+          <a class="shot-link" href="images/screenshots/shot1.png" target="_blank" rel="noopener">
+            <img src="images/screenshots/shot1.png" alt="Captura 1" loading="lazy" />
+          </a>
+          <a class="shot-link" href="images/screenshots/shot2.png" target="_blank" rel="noopener">
+            <img src="images/screenshots/shot2.png" alt="Captura 2" loading="lazy" />
+          </a>
+          <a class="shot-link" href="images/screenshots/shot3.png" target="_blank" rel="noopener">
+            <img src="images/screenshots/shot3.png" alt="Captura 3" loading="lazy" />
+          </a>
+          <a class="shot-link" href="images/screenshots/shot4.png" target="_blank" rel="noopener">
+            <img src="images/screenshots/shot4.png" alt="Captura 4" loading="lazy" />
+          </a>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2>Preguntas frecuentes</h2>
+      <details>
+        <summary>¿Es seguro descargar el APK?</summary>
+        <p>Sí, descarga el APK desde este sitio únicamente. Comprueba que el nombre del paquete coincide con el que esperas (<code>com.warfre.auto_click</code>).</p>
+      </details>
+      <details>
+        <summary>¿Necesito habilitar instalaciones desde orígenes desconocidos?</summary>
+        <p>En Android 8+ suele pedirse permiso por app al instalar desde APK. Revisa la configuración de seguridad si es necesario.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; <span id="year"></span> Asistente InDrive — <a href="privacy.html">Política de privacidad</a></p>
+    </div>
+  </footer>
+
+  <!-- Modal de contacto -->
+  <div id="contact-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header class="modal-header">
+        <h3 id="modal-title">Contactar soporte</h3>
+        <button id="modal-close" class="modal-close" aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p>Selecciona un número para abrir WhatsApp:</p>
+        <div class="contact-buttons">
+          <button class="contact-number" data-number="573502214623">
+            <img class="wa-gif" src="images/whatsapp.gif" alt="WhatsApp" aria-hidden="true" />
+            <span class="number-text">+57 350 221 4623</span>
+          </button>
+          <button class="contact-number" data-number="573142999526">
+            <img class="wa-gif" src="images/whatsapp.gif" alt="WhatsApp" aria-hidden="true" />
+            <span class="number-text">+57 314 299 9526</span>
+          </button>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button id="modal-cancel" class="btn outline">Cerrar</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+  <script>
+    // Código para manejar modal y abrir WhatsApp — espera a que el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function(){
+      (function(){
+        var contactBtn = document.getElementById('contact-btn');
+        var floatingBtn = document.getElementById('contact-floating');
+        var modal = document.getElementById('contact-modal');
+        var overlay = document.getElementById('modal-overlay');
+        var closeBtn = document.getElementById('modal-close');
+        var cancelBtn = document.getElementById('modal-cancel');
+        var numberBtns = document.querySelectorAll('.contact-number');
+
+        function openModal(){
+          if(!modal) return;
+          modal.classList.add('open');
+          modal.setAttribute('aria-hidden','false');
+          // focus management
+          if(closeBtn) closeBtn.focus();
+        }
+        function closeModal(){
+          if(!modal) return;
+          modal.classList.remove('open');
+          modal.setAttribute('aria-hidden','true');
+          if(contactBtn) contactBtn.focus();
+        }
+
+        contactBtn && contactBtn.addEventListener('click', openModal);
+        // botón flotante también abre modal
+        floatingBtn && floatingBtn.addEventListener('click', openModal);
+        closeBtn && closeBtn.addEventListener('click', closeModal);
+        cancelBtn && cancelBtn.addEventListener('click', closeModal);
+        overlay && overlay.addEventListener('click', closeModal);
+
+        // Esc cerrar
+        window.addEventListener('keydown', function(e){
+          if(e.key === 'Escape' && modal && modal.classList.contains('open')) closeModal();
+        });
+
+        numberBtns.forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var num = btn.getAttribute('data-number');
+            if(!num) return;
+            // Prellenar mensaje (opcional)
+            var text = encodeURIComponent('Hola, necesito asistencia con Asistente InDrive.');
+            var url = 'https://wa.me/' + encodeURIComponent(num) + '?text=' + text;
+            window.open(url, '_blank', 'noopener');
+          });
+        });
+      })();
+    });
+  </script>
+
+  <!-- Botón flotante fijo -->
+  <button id="contact-floating" class="floating-contact" aria-label="Contactar soporte">
+    <img class="wa-gif" src="images/whatsapp.gif" alt="WhatsApp" aria-hidden="true" />
+    <span class="floating-text">Soporte</span>
+  </button>
+</body>
+</html>
