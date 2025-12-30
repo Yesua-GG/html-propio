@@ -556,18 +556,7 @@
     return-void
 .end method
 
-.method public onViewCreated(Landroid/view/View;Landroid/os/Bundle;)V
-    .locals 0
-    .param p1, "view" # Landroid/view/View;
-    .param p2, "savedInstanceState" # Landroid/os/Bundle;
 
-    .prologue
-    invoke-super {p0, p1, p2}, Lcu1/h;->onViewCreated(Landroid/view/View;Landroid/os/Bundle;)V
-
-    invoke-static {p1}, Lsinet/startup/inDriver/BotUtils;->initBotInfo(Landroid/view/View;)V
-
-    return-void
-.end method
 
 .method private final A6(Z)V
     .locals 1
@@ -3989,6 +3978,12 @@
 
     .line 1
     invoke-super {p0}, Lcu1/h;->onResume()V
+
+    invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getView()Landroid/view/View;
+    move-result-object v0
+    if-eqz v0, :cond_skip_bot
+    invoke-static {v0}, Lsinet/startup/inDriver/BotUtils;->initBotInfo(Landroid/view/View;)V
+    :cond_skip_bot
 
     .line 4
     invoke-virtual {p0}, Lsinet/startup/inDriver/city/driver/feed/impl/ui/OrdersFragment;->R6()Lwk0/d;
